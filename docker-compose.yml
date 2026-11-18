@@ -1,0 +1,32 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: railway
+      POSTGRES_USER: railway_user
+      POSTGRES_PASSWORD: change_this_database_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - railway_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U railway_user -d railway"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: .
+    environment:
+      DATABASE_URL: postgresql+psycopg://railway_user:change_this_database_password@db:5432/railway
+      SECRET_KEY: replace-this-with-a-long-random-secret-before-use
+      ACCESS_TOKEN_EXPIRE_MINUTES: 30
+      CORS_ORIGINS: http://localhost:3000,http://127.0.0.1:5500
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  railway_pgdata:
